@@ -24,7 +24,7 @@ ssh guardrail
 Immer, wenn du am Code etwas geändert hast:
 
 ```bash
-cd "/Users/leagoerl/Documents/MA/Chat Unpacker/chat-unpacker"
+cd "/Users/leagoerl/Documents/MA/Implementation_PreStudy/chat-unpacker"
 npm run build                                   # erzeugt dist/ neu
 
 ssh guardrail "rm -rf ~/web/privacy-guardrail/dist"
