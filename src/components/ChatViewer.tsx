@@ -175,7 +175,7 @@ export const ChatViewer = ({ chats, onToggleChat, onToggleAll, applyMasking, onA
                   className="mt-1"
                 />
                 
-                <div className="flex-1 space-y-3">
+                <div className="flex-1 min-w-0 space-y-3">
                   <div className="flex items-center gap-2">
                     <MessageSquare className="h-4 w-4 text-primary" />
                     <h4 className="font-medium text-foreground">{chat.title}</h4>
@@ -196,7 +196,7 @@ export const ChatViewer = ({ chats, onToggleChat, onToggleAll, applyMasking, onA
                             Your prompt
                           </span>
                         </div>
-                        <p className="text-foreground line-clamp-2 select-text cursor-text">
+                        <p className="text-foreground select-text cursor-text whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
                           {applyMasking(message.content)}
                         </p>
                       </div>
