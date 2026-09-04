@@ -27,8 +27,8 @@ Immer, wenn du am Code etwas geändert hast:
 cd "/Users/leagoerl/Documents/MA/Implementation_PreStudy/chat-unpacker"
 npm run build                                   # erzeugt dist/ neu
 
-ssh guardrail "rm -rf ~/web/privacy-guardrail/dist"
-scp -r dist guardrail:~/web/privacy-guardrail/
+ssh guardrail "rm -rf ~/web/privacy-guardrail-pre-study/dist"
+scp -r dist guardrail:~/web/privacy-guardrail-pre-study/
 ```
 
 Reine `dist/`-Updates brauchen **keinen** Neustart. Nur wenn du `main.py`
@@ -59,39 +59,39 @@ ssh guardrail "sudo journalctl -u privacy-guardrail -f"       # live mitlesen
 ## 4. Ergebnisse (Datenspenden) abrufen
 
 Jede Einsendung liegt als eigene JSON-Datei in
-`~/web/privacy-guardrail/data/submissions/` (Name: `<id_one>__<zeit>.json`).
+`~/web/privacy-guardrail-pre-study/data/submissions/` (Name: `<id_one>__<zeit>.json`).
 
 Wie viele sind da / welche?
 
 ```bash
-ssh guardrail "ls -la ~/web/privacy-guardrail/data/submissions/"
-ssh guardrail "ls ~/web/privacy-guardrail/data/submissions/ | wc -l"   # Anzahl
+ssh guardrail "ls -la ~/web/privacy-guardrail-pre-study/data/submissions/"
+ssh guardrail "ls ~/web/privacy-guardrail-pre-study/data/submissions/ | wc -l"   # Anzahl
 ```
 
 Alle Dateien auf den Mac herunterladen (in einen lokalen Ordner `submissions/`):
 
 ```bash
 mkdir -p ~/Desktop/vorstudie-submissions
-rsync -av guardrail:~/web/privacy-guardrail/data/submissions/ ~/Desktop/vorstudie-submissions/
+rsync -av guardrail:~/web/privacy-guardrail-pre-study/data/submissions/ ~/Desktop/vorstudie-submissions/
 ```
 
 (rsync lädt nur neue/geänderte Dateien – ideal, um zwischendurch immer wieder
 den aktuellen Stand zu holen.) Alternativ mit scp:
 
 ```bash
-scp -r guardrail:~/web/privacy-guardrail/data/submissions ~/Desktop/vorstudie-submissions
+scp -r guardrail:~/web/privacy-guardrail-pre-study/data/submissions ~/Desktop/vorstudie-submissions
 ```
 
 Eine einzelne Datei ansehen, ohne sie herunterzuladen:
 
 ```bash
-ssh guardrail "cat ~/web/privacy-guardrail/data/submissions/<DATEINAME>.json"
+ssh guardrail "cat ~/web/privacy-guardrail-pre-study/data/submissions/<DATEINAME>.json"
 ```
 
 ## 5. Aufräumen (z. B. Testdaten löschen)
 
 ```bash
-ssh guardrail "rm ~/web/privacy-guardrail/data/submissions/testrun__*.json"
+ssh guardrail "rm ~/web/privacy-guardrail-pre-study/data/submissions/testrun__*.json"
 ```
 
 ---

@@ -34,23 +34,23 @@ SSH only works inside the MWN. From home, connect via **eduVPN**
 
 ## 3. Upload the app + build
 
-Pick a clean folder on the server, e.g. `~/web/privacy-guardrail`.
+Pick a clean folder on the server, e.g. `~/web/privacy-guardrail-pre-study`.
 From the project root, upload the backend files and the build (SSH port is 22022):
 
 ```bash
-ssh -p 22022 privacy-guardrail@immimed-prjsv22.medien.ifi.lmu.de "mkdir -p ~/web/privacy-guardrail"
+ssh -p 22022 privacy-guardrail@immimed-prjsv22.medien.ifi.lmu.de "mkdir -p ~/web/privacy-guardrail-pre-study"
 
 scp -P 22022 server/main.py server/requirements.txt \
-    privacy-guardrail@immimed-prjsv22.medien.ifi.lmu.de:~/web/privacy-guardrail/
+    privacy-guardrail@immimed-prjsv22.medien.ifi.lmu.de:~/web/privacy-guardrail-pre-study/
 
 scp -P 22022 -r dist \
-    privacy-guardrail@immimed-prjsv22.medien.ifi.lmu.de:~/web/privacy-guardrail/
+    privacy-guardrail@immimed-prjsv22.medien.ifi.lmu.de:~/web/privacy-guardrail-pre-study/
 ```
 
 After this the server should contain:
 
 ```
-~/web/privacy-guardrail/
+~/web/privacy-guardrail-pre-study/
 ├── main.py
 ├── requirements.txt
 └── dist/            (index.html, assets/, ...)
@@ -60,7 +60,7 @@ After this the server should contain:
 
 ```bash
 ssh -p 22022 privacy-guardrail@immimed-prjsv22.medien.ifi.lmu.de
-cd ~/web/privacy-guardrail
+cd ~/web/privacy-guardrail-pre-study
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 mkdir -p data/submissions

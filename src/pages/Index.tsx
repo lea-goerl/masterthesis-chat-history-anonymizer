@@ -5,10 +5,18 @@ import { MaskingControls } from "@/components/MaskingControls";
 import { ExportControls } from "@/components/ExportControls";
 import { Button } from "@/components/ui/button";
 import { HelpForm } from "@/components/HelpForm";
-import { FileText, HelpCircle } from "lucide-react";
+import { FileText, HelpCircle, Info, ShieldCheck } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import JSZip from "jszip";
 import { MaskedWord, PrivacyTagId, DEFAULT_TAG_ID } from "@/lib/privacyTags";
 import { escapeRegExp } from "@/lib/utils";
+import { getParticipantId } from "@/vars";
 
 export interface ChatMessage {
   id: string;
@@ -26,6 +34,8 @@ const Index = () => {
   const [maskedWords, setMaskedWords] = useState<MaskedWord[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isHelpVisible, setHelpvisible] = useState(false);
+  const [instructionsOpen, setInstructionsOpen] = useState(true);
+  const [privacyOpen, setPrivacyOpen] = useState(false);
 
   const handleFileUpload = async (file: File) => {
     setIsLoading(true);
@@ -164,6 +174,8 @@ const Index = () => {
       }
 
       setChats(chatFiles);
+      // Show the "what to do" overlay every time a new file is loaded.
+      setInstructionsOpen(true);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       console.error('Error processing ZIP file:', errorMessage, error);
@@ -172,8 +184,7 @@ const Index = () => {
       alert(`Upload failed: ${errorMessage}\n\nPlease check the console for more details or contact support if the issue persists.`);
 
       const endpointUrl = `${import.meta.env.BASE_URL}submit`
-      var url = new URL(window.location.href);
-      var idOne = url.searchParams.get("id_one");
+      const idOne = getParticipantId();
       
       const response = await fetch(endpointUrl, {
         method: "POST",
@@ -212,6 +223,13 @@ const Index = () => {
 
   const toggleAll = (selected: boolean) => {
     setChats(prev => prev.map(chat => ({ ...chat, selected })));
+  };
+
+  // Permanently remove a single conversation from the list before submission.
+  // This is local-only (nothing has been sent yet); the participant can always
+  // re-upload the export to bring deleted conversations back.
+  const deleteChat = (id: string) => {
+    setChats(prev => prev.filter(chat => chat.id !== id));
   };
 
   const addMaskedWord = (word: string, tag: PrivacyTagId = DEFAULT_TAG_ID) => {
@@ -258,8 +276,8 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card">
+    <div className="flex min-h-screen flex-col bg-background lg:h-screen lg:overflow-hidden">
+      <header className="shrink-0 border-b border-border bg-card">
         <div className="container mx-auto flex items-center justify-between px-4 py-6">
           <div className="flex items-center gap-3">
             <FileText className="h-8 w-8 text-primary" />
@@ -275,20 +293,24 @@ const Index = () => {
         </div>
       </header>
 
-      {isHelpVisible ? <div id="help-section"><HelpForm onClose={() => setHelpvisible(false)} /></div> : <div></div>}
-   
-      <main className="container mx-auto px-4 py-8">
+      {isHelpVisible && (
+        <div id="help-section" className="shrink-0 overflow-auto" style={{ maxHeight: "50vh" }}>
+          <HelpForm onClose={() => setHelpvisible(false)} />
+        </div>
+      )}
+
+      <main className="container mx-auto px-4 py-8 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col">
         {chats.length === 0 ? (
-          <div>
+          <div className="lg:min-h-0 lg:flex-1 lg:overflow-auto">
           <FileUpload
             onFileUpload={handleFileUpload}
             isLoading={isLoading}
             onNeedHelp={openHelp}
           />
-        </div>          
+        </div>
         ) : (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-6 lg:min-h-0 lg:flex-1">
+            <div className="flex shrink-0 items-center justify-between">
               <div className="space-y-1">
                 <h2 className="text-xl font-semibold text-foreground">
                   {chats.length} conversation{chats.length !== 1 ? 's' : ''} loaded
@@ -297,37 +319,174 @@ const Index = () => {
                   {chats.filter(c => c.selected).length} selected
                 </p>
               </div>
-              <Button variant="outline" onClick={reset}>
-                Load Different File
-              </Button> 
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setPrivacyOpen(true)}>
+                  <ShieldCheck className="mr-2 h-4 w-4" />
+                  Privacy &amp; your data
+                </Button>
+                <Button variant="outline" onClick={() => setInstructionsOpen(true)}>
+                  <Info className="mr-2 h-4 w-4" />
+                  Instructions
+                </Button>
+                <Button variant="outline" onClick={reset}>
+                  Load Different File
+                </Button>
+              </div>
             </div>
 
-            <div className="grid gap-6 lg:grid-cols-3">
-              <div className="lg:col-span-2">
-                <ChatViewer 
-                  chats={chats} 
+            {/* Step-by-step instructions as an overlay, shown right after upload
+                (and reopenable via the "Instructions" button) so they don't take
+                up permanent space above the masking view. */}
+            <Dialog open={instructionsOpen} onOpenChange={setInstructionsOpen}>
+              <DialogContent className="max-w-xl">
+                <DialogHeader>
+                  <DialogTitle>What to do before submitting</DialogTitle>
+                </DialogHeader>
+                <ol className="space-y-4">
+                  <li className="flex gap-3">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
+                      1
+                    </span>
+                    <p className="text-sm text-foreground">
+                      <span className="font-medium">Hide personal data.</span> Go through your
+                      prompts and black out anything that identifies you or someone else — names,
+                      email addresses, phone numbers, home address, or passwords. Select the text
+                      (or double-click a word) and choose a privacy tag. Every occurrence is then
+                      covered with a black box (█).{" "}
+                      <span className="font-medium text-foreground">
+                        The words underneath stay on your device: the researchers receive only
+                        the black box, so they can see that you hid something there, but never
+                        what it was.
+                      </span>
+                    </p>
+                  </li>
+                  <li className="flex gap-3">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
+                      2
+                    </span>
+                    <p className="text-sm text-foreground">
+                      <span className="font-medium">Remove what you don't want to share.</span>{" "}
+                      Untick a conversation to exclude it, or delete it entirely with the trash
+                      icon. Only your own prompts are ever sent — never ChatGPT's replies.
+                    </p>
+                  </li>
+                  <li className="flex gap-3">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
+                      3
+                    </span>
+                    <p className="text-sm text-foreground">
+                      <span className="font-medium">Review and submit.</span> Click{" "}
+                      <span className="font-medium">Review and submit</span> to see a preview of
+                      exactly what will be transmitted, then confirm. Nothing is sent before that.
+                    </p>
+                  </li>
+                </ol>
+                <DialogFooter>
+                  <Button onClick={() => setInstructionsOpen(false)}>Got it, let's start</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            {/* Privacy / data-handling information, reopenable any time via the
+                "Privacy & your data" button. Content mirrors the ethics-approved
+                description of the pseudonymisation and data flow. */}
+            <Dialog open={privacyOpen} onOpenChange={setPrivacyOpen}>
+              <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <ShieldCheck className="h-5 w-5 text-primary" />
+                    What happens to your data
+                  </DialogTitle>
+                </DialogHeader>
+
+                <div className="space-y-4 text-sm leading-relaxed text-foreground">
+                  <p>
+                    <span className="font-semibold">Your chats stay with you at first.</span>{" "}
+                    Reading in your ChatGPT history happens entirely in your browser — nothing is
+                    sent to us during this step. ChatGPT's replies are discarded right away; we
+                    only ever see and store your own messages (your prompts).
+                  </p>
+
+                  <p>
+                    <span className="font-semibold">You decide what gets hidden.</span> You mark
+                    the sensitive parts of your prompts yourself and assign each one to a
+                    category. A placeholder then replaces the original text at those spots. This
+                    also happens only locally, in your browser.
+                  </p>
+
+                  <p>
+                    <span className="font-semibold">
+                      You see exactly what will be sent — before it's sent.
+                    </span>{" "}
+                    Before anything leaves your browser, we show you a full preview, exactly as
+                    the data would arrive with us. Only these things are transmitted: your masked
+                    prompts, timestamps, your category tags, and your Prolific ID.
+                  </p>
+
+                  <p>
+                    <span className="font-semibold">
+                      Nothing is sent without your active go-ahead.
+                    </span>{" "}
+                    Only once you've seen this preview and confirm with a click do the masked
+                    data go to the LMU university server. Until then, not a single piece of data
+                    leaves your browser.
+                  </p>
+
+                  <p>
+                    <span className="font-semibold">No third parties are involved.</span> Your
+                    data go only to LMU systems — not to ChatGPT, not to any other AI service,
+                    not to any commercial provider.
+                  </p>
+
+                  <div className="rounded-md border border-primary/30 bg-primary/5 p-3">
+                    <p>
+                      <span className="font-semibold">One thing to keep in mind:</span> because
+                      you do the masking yourself, something can occasionally be missed. That's
+                      what the preview at the end is for — use it to take one last calm look and
+                      check that everything you don't want to share is really hidden.
+                    </p>
+                  </div>
+                </div>
+
+                <DialogFooter>
+                  <Button onClick={() => setPrivacyOpen(false)}>Close</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            <div className="grid gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-3">
+              <div className="lg:col-span-2 lg:flex lg:min-h-0 lg:flex-col">
+                <ChatViewer
+                  chats={chats}
                   onToggleChat={toggleChat}
                   onToggleAll={toggleAll}
+                  onDeleteChat={deleteChat}
                   applyMasking={applyMasking}
                   onAddMaskedWord={addMaskedWord}
                 />
               </div>
               
               
-              <div className="space-y-6">
+              <div className="flex flex-col gap-6 lg:min-h-0 lg:overflow-y-auto">
                 <MaskingControls
                   maskedWords={maskedWords}
                   onAddWord={addMaskedWord}
                   onRemoveWord={removeMaskedWord}
                   onChangeTag={setMaskedWordTag}
                 />
-              
-                <ExportControls 
-                  chats={chats.filter(c => c.selected)}
-                  allChatLength={chats.length}
-                  applyMasking={applyMasking}
-                  maskedWords={maskedWords}
-                />
+
+                {/* Keep "Review and submit" reachable at every screen size: on
+                    large screens the column scrolls and this block sticks to the
+                    bottom so the button is always visible; on small screens it
+                    just sits at the end of the normal, scrollable page flow. */}
+                <div className="lg:sticky lg:bottom-0 lg:z-10 lg:bg-background lg:pt-4">
+                  <ExportControls
+                    chats={chats.filter(c => c.selected)}
+                    allChatLength={chats.length}
+                    applyMasking={applyMasking}
+                    maskedWords={maskedWords}
+                  />
+                </div>
               </div>
             </div>
           </div>

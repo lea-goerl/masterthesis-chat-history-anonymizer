@@ -1,7 +1,7 @@
 # Beispiel-Unit für die Vorstudien-App (FastAPI/Uvicorn).
 # Gegenüber der Dummy-App ändern sich nur drei Zeilen:
 #   WorkingDirectory, Environment (SUBMISSION_DIR) und ExecStart.
-# Die App liegt in ~/web/privacy-guardrail, die venv in ~/web/privacy-guardrail/.venv.
+# Die App liegt in ~/web/privacy-guardrail-pre-study, die venv in ~/web/privacy-guardrail-pre-study/.venv.
 
 [Unit]
 Description=Privacy Guardrail data-donation app
@@ -9,9 +9,9 @@ After=network.target
 
 [Service]
 User=privacy-guardrail
-WorkingDirectory=/home/privacy-guardrail/web/privacy-guardrail
-Environment=SUBMISSION_DIR=/home/privacy-guardrail/web/privacy-guardrail/data/submissions
-ExecStart=/home/privacy-guardrail/web/privacy-guardrail/.venv/bin/uvicorn main:app --host 127.0.0.1 --port 50000
+WorkingDirectory=/home/privacy-guardrail/web/privacy-guardrail-pre-study
+Environment=SUBMISSION_DIR=/home/privacy-guardrail/web/privacy-guardrail-pre-study/data/submissions
+ExecStart=/home/privacy-guardrail/web/privacy-guardrail-pre-study/.venv/bin/uvicorn main:app --host 127.0.0.1 --port 50000
 Restart=on-failure
 
 [Install]

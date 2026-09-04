@@ -6,7 +6,7 @@
 #   - WorkingDirectory -> the folder that contains main.py AND dist/
 #   - ExecStart        -> run THIS app (main:app) on localhost:50000
 #
-# Assumes a virtualenv at ~/web/privacy-guardrail/.venv (see deploy guide).
+# Assumes a virtualenv at ~/web/privacy-guardrail-pre-study/.venv (see deploy guide).
 
 [Unit]
 Description=Privacy Guardrail data-donation app
@@ -14,9 +14,9 @@ After=network.target
 
 [Service]
 User=privacy-guardrail
-WorkingDirectory=/home/privacy-guardrail/web/privacy-guardrail
-Environment=SUBMISSION_DIR=/home/privacy-guardrail/web/privacy-guardrail/data/submissions
-ExecStart=/home/privacy-guardrail/web/privacy-guardrail/.venv/bin/uvicorn main:app --host 127.0.0.1 --port 50000
+WorkingDirectory=/home/privacy-guardrail/web/privacy-guardrail-pre-study
+Environment=SUBMISSION_DIR=/home/privacy-guardrail/web/privacy-guardrail-pre-study/data/submissions
+ExecStart=/home/privacy-guardrail/web/privacy-guardrail-pre-study/.venv/bin/uvicorn main:app --host 127.0.0.1 --port 50000
 Restart=on-failure
 
 [Install]

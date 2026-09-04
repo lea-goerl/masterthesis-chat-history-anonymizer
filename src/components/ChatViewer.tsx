@@ -4,7 +4,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquare, User, EyeOff } from "lucide-react";
+import { MessageSquare, User, EyeOff, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -13,6 +13,17 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 import { PRIVACY_TAGS, PrivacyTagId } from "@/lib/privacyTags";
 import { ChatMessage } from "@/pages/Index";
 import { toast } from "sonner";
@@ -21,13 +32,13 @@ interface ChatViewerProps {
   chats: ChatMessage[];
   onToggleChat: (id: string) => void;
   onToggleAll: (selected: boolean) => void;
+  onDeleteChat: (id: string) => void;
   applyMasking: (text: string) => string;
   onAddMaskedWord: (word: string, tag: PrivacyTagId) => void;
 }
 
-export const ChatViewer = ({ chats, onToggleChat, onToggleAll, applyMasking, onAddMaskedWord }: ChatViewerProps) => {
+export const ChatViewer = ({ chats, onToggleChat, onToggleAll, onDeleteChat, applyMasking, onAddMaskedWord }: ChatViewerProps) => {
   const allSelected = chats.every(chat => chat.selected);
-  const someSelected = chats.some(chat => chat.selected);
   const [selectedText, setSelectedText] = useState("");
   const [selectionPosition, setSelectionPosition] = useState<{ x: number; y: number } | null>(null);
   const [expandedChats, setExpandedChats] = useState<Set<string>>(new Set());
@@ -132,7 +143,7 @@ export const ChatViewer = ({ chats, onToggleChat, onToggleAll, applyMasking, onA
         </div>
       )}
 
-      <Card className="p-6">
+      <Card className="p-6 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-lg font-semibold text-foreground">Conversations</h3>
         <div className="flex gap-2">
@@ -147,17 +158,15 @@ export const ChatViewer = ({ chats, onToggleChat, onToggleAll, applyMasking, onA
         </div>
       </div>
 
-      <div className="mb-4 rounded-md border border-primary/30 bg-primary/5 p-3 text-sm text-foreground">
-        <strong>Please note:</strong> Only your own prompts (the messages you typed) are shown here and submitted to the researchers. ChatGPT's replies and the rest of the conversation are never sent.
-      </div>
-
       <p className="mb-4 text-sm text-muted-foreground">
-        Below you can review the prompts from your history. Before submitting them to the researchers, please check whether any of them contain personal data that identifies you (e.g., names) and mask it.
-        You can select a word (or double-click it) and choose a privacy tag to hide every occurrence of it.
-        Please hide personal information such as names, phone numbers, and email addresses. (Hiding names of publicly known people, such as politicians, is not necessary.)
-      </p>      
+        Select a word (or double-click it) and choose a privacy tag to mask every occurrence.
+        A masked word is covered with a black box (█): the word underneath{" "}
+        <span className="font-medium text-foreground">stays on your device and is never sent</span> —
+        the researchers only receive the black box, not what was behind it.
+        You don't need to hide names of publicly known people, such as politicians.
+      </p>
 
-      <ScrollArea className="h-[600px] pr-4">
+      <ScrollArea className="h-[600px] pr-4 lg:h-auto lg:min-h-0 lg:flex-1">
         <div className="space-y-3">
           {chats.map((chat) => {
             const userMessages = chat.messages.filter((m) => m.role === "user");
@@ -182,6 +191,40 @@ export const ChatViewer = ({ chats, onToggleChat, onToggleAll, applyMasking, onA
                     <Badge variant="secondary" className="ml-auto">
                       {userMessages.length} prompt{userMessages.length !== 1 ? 's' : ''}
                     </Badge>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
+                          aria-label={`Delete conversation "${chat.title}"`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete this conversation?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            "{chat.title}" will be removed and its prompts will not be
+                            submitted to the researchers. You can bring it back by
+                            re-uploading your export file.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            onClick={() => {
+                              onDeleteChat(chat.id);
+                              toast.success("Conversation deleted");
+                            }}
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                   
                   <div className="space-y-2">

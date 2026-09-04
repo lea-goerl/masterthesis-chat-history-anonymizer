@@ -3,8 +3,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { LifeBuoy, Send, X } from "lucide-react";
-import { getProlificReturnCode } from '@/vars';
+import { LifeBuoy, Send, X, CheckCircle2 } from "lucide-react";
+import { getParticipantId } from '@/vars';
 
 interface HelpFormProps {
   onClose?: () => void;
@@ -13,6 +13,7 @@ interface HelpFormProps {
 export const HelpForm = ({ onClose }: HelpFormProps) => {
   const [helpData, setHelpData] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const currentUrl = typeof window !== "undefined" ? window.location.href : "";
 
   const handleHelpSubmit = async (e: React.FormEvent) => {
@@ -20,13 +21,7 @@ export const HelpForm = ({ onClose }: HelpFormProps) => {
     const endpointUrl = `${import.meta.env.BASE_URL}submit`;
     setIsSubmitting(true);
 
-    const url = new URL(window.location.href);
-    const idOne = url.searchParams.get("id_one");
-    // Always send participants back to Prolific and mark the submission complete
-    // via the study's completion code (cc). Prolific identifies the participant
-    // through their own logged-in session, so id_one is not needed in the URL.
-    const targetUrl =
-      "https://app.prolific.com/submissions/complete?cc=" + getProlificReturnCode();
+    const idOne = getParticipantId();
 
     try {
       const response = await fetch(endpointUrl, {
@@ -42,7 +37,10 @@ export const HelpForm = ({ onClose }: HelpFormProps) => {
     } catch (error) {
       console.error("Error submitting data:", error);
     } finally {
-      window.location.href = targetUrl;
+      // Keep the participant inside the tool: do NOT redirect to Prolific.
+      // Just confirm the message was sent so they can continue here.
+      setIsSubmitting(false);
+      setIsSubmitted(true);
     }
   };
 
@@ -87,22 +85,35 @@ export const HelpForm = ({ onClose }: HelpFormProps) => {
           <p className="mt-2 text-muted-foreground">Thank you for your contribution!</p>
         </div>
 
-        <form onSubmit={handleHelpSubmit} className="space-y-3">
-          <div className="space-y-1.5">
-            <Label htmlFor="issue">Please describe your issue</Label>
-            <Textarea
-              id="issue"
-              value={helpData}
-              onChange={(e) => setHelpData(e.target.value)}
-              rows={4}
-              placeholder="e.g. I haven't received my export email yet…"
-            />
+        {isSubmitted ? (
+          <div className="flex items-start gap-3 rounded-md border border-primary/30 bg-primary/5 p-4">
+            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+            <div className="text-sm">
+              <p className="font-medium text-foreground">Thanks — your message has been sent.</p>
+              <p className="mt-1 text-muted-foreground">
+                We'll get back to you. You can keep this page open and continue with your
+                submission here whenever you're ready.
+              </p>
+            </div>
           </div>
-          <Button type="submit" disabled={isSubmitting}>
-            <Send className="mr-2 h-4 w-4" />
-            {isSubmitting ? "Submitting…" : "Submit and continue"}
-          </Button>
-        </form>
+        ) : (
+          <form onSubmit={handleHelpSubmit} className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="issue">Please describe your issue</Label>
+              <Textarea
+                id="issue"
+                value={helpData}
+                onChange={(e) => setHelpData(e.target.value)}
+                rows={4}
+                placeholder="e.g. I haven't received my export email yet…"
+              />
+            </div>
+            <Button type="submit" disabled={isSubmitting}>
+              <Send className="mr-2 h-4 w-4" />
+              {isSubmitting ? "Submitting…" : "Submit"}
+            </Button>
+          </form>
+        )}
       </Card>
     </div>
   );
