@@ -39,6 +39,13 @@ export const FileUpload = ({ onFileUpload, isLoading, onNeedHelp }: FileUploadPr
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">
+      <div className="rounded-lg border border-red-300 bg-red-50 p-4 lg:col-span-2">
+        <p className="text-sm text-red-700">
+          If you did not receive your data export from ChatGPT yet, please return the study and
+          contact the researchers. We can then invite you to a second iteration later on.
+        </p>
+      </div>
+
       {/* Left column: how to export */}
       <Card className="p-6">
         <h3 className="text-lg font-semibold text-foreground">
