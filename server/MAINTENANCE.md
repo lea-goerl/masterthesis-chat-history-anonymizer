@@ -35,18 +35,22 @@ Reine `dist/`-Updates brauchen **keinen** Neustart. Nur wenn du `main.py`
 (das Backend) geändert hast:
 
 ```bash
-ssh guardrail "sudo systemctl restart privacy-guardrail"
+ssh guardrail "sudo systemctl restart privacy-guardrail-pre-study"
 ```
 
 Danach im Browser prüfen: https://privacy-guardrail.medien.ifi.lmu.de/?id_one=testrun
 
 ## 3. Service steuern
 
+> **Hinweis:** Der systemd-Service heißt seit Sep 2026 `privacy-guardrail-pre-study`
+> (daneben läuft `privacy-guardrail-main-study` als weitere App). Nginx darfst du
+> nicht mehr selbst starten/stoppen (nur `sudo systemctl reload nginx`).
+
 ```bash
-ssh guardrail "systemctl is-active privacy-guardrail"   # läuft er? -> active
-ssh guardrail "sudo systemctl restart privacy-guardrail"
-ssh guardrail "sudo systemctl stop privacy-guardrail"
-ssh guardrail "sudo systemctl start privacy-guardrail"
+ssh guardrail "systemctl is-active privacy-guardrail-pre-study"   # läuft er? -> active
+ssh guardrail "sudo systemctl restart privacy-guardrail-pre-study"
+ssh guardrail "sudo systemctl stop privacy-guardrail-pre-study"
+ssh guardrail "sudo systemctl start privacy-guardrail-pre-study"
 ```
 
 Logs anschauen (z. B. bei Fehlern):
@@ -101,7 +105,6 @@ ssh guardrail "rm ~/web/privacy-guardrail-pre-study/data/submissions/testrun__*.
 ```json
 {
   "received_at": "2026-07-…T…Z",
-  "remote_addr": "…",
   "payload": {
     "id_one": "…",
     "conversations": [ /* nur die User-Prompts, geschwärzt */ ],

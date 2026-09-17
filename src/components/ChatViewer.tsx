@@ -38,7 +38,6 @@ interface ChatViewerProps {
 }
 
 export const ChatViewer = ({ chats, onToggleChat, onToggleAll, onDeleteChat, applyMasking, onAddMaskedWord }: ChatViewerProps) => {
-  const allSelected = chats.every(chat => chat.selected);
   const [selectedText, setSelectedText] = useState("");
   const [selectionPosition, setSelectionPosition] = useState<{ x: number; y: number } | null>(null);
   const [expandedChats, setExpandedChats] = useState<Set<string>>(new Set());
@@ -146,16 +145,6 @@ export const ChatViewer = ({ chats, onToggleChat, onToggleAll, onDeleteChat, app
       <Card className="p-6 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-lg font-semibold text-foreground">Conversations</h3>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onToggleAll(true)}
-            disabled={allSelected}
-          >
-            Select All
-          </Button>
-        </div>
       </div>
 
       <p className="mb-4 text-sm text-muted-foreground">
@@ -187,7 +176,7 @@ export const ChatViewer = ({ chats, onToggleChat, onToggleAll, onDeleteChat, app
                 <div className="flex-1 min-w-0 space-y-3">
                   <div className="flex items-center gap-2">
                     <MessageSquare className="h-4 w-4 text-primary" />
-                    <h4 className="font-medium text-foreground">{chat.title}</h4>
+                    <h4 className="font-medium text-foreground select-text cursor-text [overflow-wrap:anywhere]">{applyMasking(chat.title)}</h4>
                     <Badge variant="secondary" className="ml-auto">
                       {userMessages.length} prompt{userMessages.length !== 1 ? 's' : ''}
                     </Badge>
@@ -197,7 +186,7 @@ export const ChatViewer = ({ chats, onToggleChat, onToggleAll, onDeleteChat, app
                           variant="ghost"
                           size="icon"
                           className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
-                          aria-label={`Delete conversation "${chat.title}"`}
+                          aria-label={`Delete conversation "${applyMasking(chat.title)}"`}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -206,7 +195,7 @@ export const ChatViewer = ({ chats, onToggleChat, onToggleAll, onDeleteChat, app
                         <AlertDialogHeader>
                           <AlertDialogTitle>Delete this conversation?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            "{chat.title}" will be removed and its prompts will not be
+                            "{applyMasking(chat.title)}" will be removed and its prompts will not be
                             submitted to the researchers. You can bring it back by
                             re-uploading your export file.
                           </AlertDialogDescription>

@@ -1,6 +1,6 @@
 import { useCallback, useRef } from "react";
 import { useDropzone } from "react-dropzone";
-import { Upload, FileArchive, HelpCircle, Maximize } from "lucide-react";
+import { Upload, FileArchive, HelpCircle, Maximize, Info } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -43,6 +43,27 @@ export const FileUpload = ({ onFileUpload, isLoading, onNeedHelp }: FileUploadPr
         <p className="text-sm text-red-700">
           If you did not receive your data export from ChatGPT yet, please return the study and
           contact the researchers. We can then invite you to a second iteration later on.
+        </p>
+      </div>
+
+      {/* Eligibility requirements — communicated up front so participants know
+          before uploading. Both are enforced again at the submit step. */}
+      <div className="rounded-lg border border-blue-300 bg-blue-50 p-4 lg:col-span-2">
+        <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-blue-800">
+          <Info className="h-4 w-4" />
+          Before you upload — requirements for this study
+        </p>
+        <ul className="ml-6 list-disc space-y-1 text-sm text-blue-700">
+          <li>
+            Your ChatGPT history must reach back <span className="font-medium">at least one week</span> —
+            your oldest conversation should be 7 days old or more.
+          </li>
+          <li>
+            Your conversations must be <span className="font-medium">at least 80% in English</span>.
+          </li>
+        </ul>
+        <p className="mt-2 text-xs text-blue-700/80">
+          If these requirements are not met, the data can't be submitted.
         </p>
       </div>
 

@@ -71,7 +71,7 @@ mkdir -p data/submissions
 Stop the dummy app so port 50000 is free, then run ours by hand:
 
 ```bash
-sudo systemctl stop privacy-guardrail
+sudo systemctl stop privacy-guardrail-pre-study
 .venv/bin/uvicorn main:app --host 127.0.0.1 --port 50000
 ```
 
@@ -91,15 +91,19 @@ Stop the manual run with Ctrl+C when done.
 
 You have `sudo` for `systemctl`/`journalctl` on this service, but you can't edit
 the unit file yourself. Send `server/privacy-guardrail.service.example` to Rainer
-and ask him to point the existing `privacy-guardrail.service` at this app —
-specifically `WorkingDirectory`, the `SUBMISSION_DIR` env var, and `ExecStart`
-(the `main:app` uvicorn line in the example).
+and ask him to point the existing `privacy-guardrail-pre-study.service` at this
+app — specifically `WorkingDirectory`, the `SUBMISSION_DIR` env var, and
+`ExecStart` (the `main:app` uvicorn line in the example).
+
+> **Note:** The unit is named `privacy-guardrail-pre-study` (a second app,
+> `privacy-guardrail-main-study`, runs alongside it). `journalctl` is still
+> permitted only under the old `-u privacy-guardrail` name.
 
 Once he's updated it:
 
 ```bash
-sudo systemctl restart privacy-guardrail
-sudo systemctl status  privacy-guardrail
+sudo systemctl restart privacy-guardrail-pre-study
+sudo systemctl status  privacy-guardrail-pre-study
 sudo journalctl -u privacy-guardrail -f      # live logs while you test
 ```
 
@@ -120,8 +124,8 @@ after submitting, the app redirects back there (see `src/vars.tsx` /
 ## Updating later
 
 Rebuild locally (`npm run build`), re-upload `dist/` (step 3), and
-`sudo systemctl restart privacy-guardrail`. The backend rarely changes; usually
-only `dist/` needs re-uploading.
+`sudo systemctl restart privacy-guardrail-pre-study`. The backend rarely changes;
+usually only `dist/` needs re-uploading.
 
 ## Where the data lives
 
@@ -130,7 +134,6 @@ Each submission → `data/submissions/<id_one>__<UTC-timestamp>.json`, containin
 ```json
 {
   "received_at": "2026-07-05T15:38:21+00:00",
-  "remote_addr": "…",
   "payload": {
     "id_one": "…",
     "conversations": [ /* user prompts only, masked */ ],

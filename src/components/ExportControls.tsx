@@ -12,20 +12,31 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Download, Send, CheckCircle2, ShieldCheck, MessageSquare } from "lucide-react";
+import { Download, Send, CheckCircle2, ShieldCheck, MessageSquare, AlertTriangle } from "lucide-react";
 import { ChatMessage } from "@/pages/Index";
 import { toast } from "sonner";
 import { getQualtricsSurveyUrl, getParticipantId } from "@/vars";
 import { MaskedWord, PRIVACY_TAGS } from "@/lib/privacyTags";
+import {
+  isChatOldEnough,
+  isEnglishEnough,
+  getEnglishRatio,
+  MIN_CHAT_AGE_DAYS,
+  MIN_ENGLISH_RATIO,
+} from "@/lib/validation";
 
 interface ExportControlsProps {
   chats: ChatMessage[];
+  // All loaded conversations (regardless of selection). The eligibility
+  // requirements (chat age, English share) are evaluated over these, not just
+  // the currently selected ones.
+  allChats: ChatMessage[];
   applyMasking: (text: string) => string;
   allChatLength: number;
   maskedWords: MaskedWord[];
 }
 
-export const ExportControls = ({ chats, applyMasking, allChatLength, maskedWords }: ExportControlsProps) => {
+export const ExportControls = ({ chats, allChats, applyMasking, allChatLength, maskedWords }: ExportControlsProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDone, setIsDone] = useState(false);
   const [continueUrl, setContinueUrl] = useState("");
@@ -36,6 +47,9 @@ export const ExportControls = ({ chats, applyMasking, allChatLength, maskedWords
   // Second, separate confirmation: the participant attests the data is their own
   // ChatGPT history and does not contain third parties' logs/data.
   const [ownDataChecked, setOwnDataChecked] = useState(false);
+  // Hard eligibility requirements ("break-up"): if the export is too recent or
+  // not sufficiently English, submission is blocked and this dialog explains why.
+  const [blockReasons, setBlockReasons] = useState<string[]>([]);
 
   // After the donation is stored, forward the participant to the Qualtrics
   // survey automatically. A short delay lets them see the confirmation; the
@@ -53,7 +67,7 @@ export const ExportControls = ({ chats, applyMasking, allChatLength, maskedWords
     // dropped. Masking (█) is applied to whatever the user chose to hide, so any
     // text they did NOT black out remains visible.
     return chats.map(chat => ({
-      title: chat.title,
+      title: applyMasking(chat.title),
       messages: chat.messages
         .filter(msg => msg.role === 'user')
         .map(msg => ({
@@ -117,6 +131,29 @@ export const ExportControls = ({ chats, applyMasking, allChatLength, maskedWords
       toast.error("No conversations selected to submit");
       return;
     }
+
+    // Enforce the eligibility requirements before anything can be transmitted.
+    // These are evaluated over ALL loaded conversations, not only the selected
+    // ones, so deselecting chats cannot bypass them.
+    const reasons: string[] = [];
+    if (!isChatOldEnough(allChats)) {
+      reasons.push(
+        `Your conversations are too recent. Your history must reach back at least ${MIN_CHAT_AGE_DAYS} days — your oldest conversation is less than one week old.`
+      );
+    }
+    if (!isEnglishEnough(allChats)) {
+      const pct = Math.round(getEnglishRatio(allChats) * 100);
+      reasons.push(
+        `Your conversations must be at least ${Math.round(
+          MIN_ENGLISH_RATIO * 100
+        )}% in English. Currently about ${pct}% of your prompts are detected as English.`
+      );
+    }
+    if (reasons.length > 0) {
+      setBlockReasons(reasons);
+      return;
+    }
+
     setConsentChecked(false);
     setOwnDataChecked(false);
     setShowPreview(true);
@@ -257,6 +294,31 @@ export const ExportControls = ({ chats, applyMasking, allChatLength, maskedWords
           </Button>
         )}
       </div>
+
+      {/* Break-up dialog: submission blocked because an eligibility requirement
+          (chat age or language) is not met. Nothing is sent. */}
+      <Dialog open={blockReasons.length > 0} onOpenChange={(o) => !o && setBlockReasons([])}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              This submission can't be sent
+            </DialogTitle>
+            <DialogDescription>
+              Your data does not meet the requirements for this study, so it can't
+              be submitted. Nothing has been sent.
+            </DialogDescription>
+          </DialogHeader>
+          <ul className="ml-5 list-disc space-y-2 text-sm text-foreground">
+            {blockReasons.map((r, i) => (
+              <li key={i}>{r}</li>
+            ))}
+          </ul>
+          <DialogFooter>
+            <Button onClick={() => setBlockReasons([])}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
         <DialogContent className="max-w-2xl">

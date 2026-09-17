@@ -482,6 +482,7 @@ const Index = () => {
                 <div className="lg:sticky lg:bottom-0 lg:z-10 lg:bg-background lg:pt-4">
                   <ExportControls
                     chats={chats.filter(c => c.selected)}
+                    allChats={chats}
                     allChatLength={chats.length}
                     applyMasking={applyMasking}
                     maskedWords={maskedWords}

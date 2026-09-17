@@ -77,7 +77,6 @@ async def submit(request: Request):
 
     record = {
         "received_at": _now_iso(),
-        "remote_addr": request.client.host if request.client else None,
         "payload": payload,
     }
 
